@@ -1,0 +1,10 @@
+creds.json
+token.json
+.env
+__pycache__
+/output/*.png
+/Trash
+/Testing
+Entries.json
+.vscode
+.venv
