@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import logging as log
-import select
 
 from googleapiclient.discovery import build
 
