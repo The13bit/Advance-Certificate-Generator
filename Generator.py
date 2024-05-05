@@ -1,40 +1,54 @@
+
+from cgitb import text
+from email.mime import base
+import hashlib
 import json
+import shutil
+import threading
+from tkinter import filedialog
 import pandas as pd
 from PIL import  Image,ImageFont,ImageDraw
 import tkinter as tk
-from tkinter import messagebox
-import cv2
-import numpy as np
+
 import base64
-from email import message
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
-import smtplib, ssl
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.popup import Popup
+from kivy.uix.dropdown import DropDown
+from kivy.clock import Clock
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
 from tkinter import E
-from Helper import api,auth
+from Auth import api,auth
 import os
 from dotenv import load_dotenv
 from helper.BoundedBoxer import BoundedBoxer
 load_dotenv()
 class Generator:
-    def __init__(self,data) -> None:
+    def __init__(self,data,spreadId) -> None:
         self.Cert_path='certificates/cert.png'
         self.data=data
         self.img=Image.open(self.Cert_path)
         self.df=pd.DataFrame.from_dict(data)
         self.EMAIL_FROM=os.environ.get("EMAIL")
-        
+        self.spreadId=spreadId
         self.EMAIL_SUBJECT = 'Hello  from '
         self.EMAIL_CONTENT = 'This is you certificate'
+        self.Conditons=[]
 
 
 
 
-    def Rock_and_roll(self):
-        
-        self.df.drop(['!^$(x)','Flag',''],inplace=True,axis=1)
+    def Start_Generation(self):
         print(self.df)
+        event=threading.Event()
+        
+        
+      
 
 
         def send_mail(message):
@@ -105,8 +119,150 @@ class Generator:
 
             window.mainloop()
             return selectedCols
+        
+        def set_subject(instance,value):
+            self.EMAIL_SUBJECT=value
+        def set_message(instance,value):
+            self.EMAIL_CONTENT=value
+        
+        def create__message_box(dt):
+            def on_button_release(instance):
+                # Dismiss the popup
+                popup.dismiss() 
+                Add_Watch_Conditions()
+                # Set the event
+                
+            layout=BoxLayout(orientation="vertical")
+            subject_label=Label(text="Subject")
+            subject_box=TextInput(text="Enter Subject")
 
+            message_label=Label(text="Message")
+            messgae_box=TextInput(text="Enter Message",multiline=True)
+
+            subject_box.bind(text=set_subject) # type: ignore
+            messgae_box.bind(text=set_message) # type: ignore
+            button=Button(text="Close")
+            layout.add_widget(subject_label)
+            layout.add_widget(subject_box)
+            layout.add_widget(message_label)
+            layout.add_widget(messgae_box)
+            layout.add_widget(button)
+            popup=Popup(title="Add Message",content=layout,size_hint=(.5,.5))
+            button.bind(on_release=on_button_release) # type: ignore
+            popup.open()
+        
+        def Add_Watch_Conditions():
+            Conditions=["<",">","<=",">=","=="]
+            
+            def closer(instance):
+                popup.dismiss()
+
+                for i in outerlayout.children:
+                    arr=[]
+                    for j in i.children:
+                        if isinstance(j,Button):
+                            arr.append(j.text)
+                        elif isinstance(j,TextInput):
+                            arr.append(j.text)
+                    if arr:
+                        self.Conditons.append(arr[::-1])
+                
+
+
+                event.set()
+
+            
+                
+            
+            innerlayout=BoxLayout()
+            dropbox=DropDown()
+            dropbox2=DropDown()
+            for i in self.seleccol:
+                
+                btn=Button(text=i,size_hint=(None, None),height=44)
+                dropbox.add_widget(btn)
+                btn.bind(on_release=lambda btn: dropbox.select(btn.text)) # type: ignore
+            for i in Conditions:
+                btn=Button(text=i,size_hint=(None, None),height=44)
+                dropbox2.add_widget(btn)
+                btn.bind(on_release=lambda btn: dropbox2.select(btn.text)) # type: ignore
+            
+            mainbutton = Button(text='Select', size_hint=(.3, None),height=44)
+            mainbutton.bind(on_release=dropbox.open) # type: ignore
+            mainbutton2 = Button(text='Select', size_hint=(.3, None),height=44)
+            mainbutton2.bind(on_release=dropbox2.open) # type: ignore
+            dropbox2.bind(on_select=lambda instance, x: setattr(mainbutton2, 'text', x)) # type: ignore
+            textinput=TextInput(hint_text="Enter Value",size_hint=(.3, None),height=44)
+            dropbox.bind(on_select=lambda instance, x: setattr(mainbutton, 'text', x)) # type: ignore
+            innerlayout.add_widget(mainbutton)
+            innerlayout.add_widget(mainbutton2)
+            innerlayout.add_widget(textinput)
+            
+                
+            
+            outerlayout=BoxLayout(orientation="vertical")
+            outerlayout.pos_hint = {'center_x': .5, 'center_y': .5}
+            
+
+            
+            popup=Popup(title="Select Conditions",content=outerlayout)
+           
+           
+            closebtn=Button(text="Close/Skip",size_hint=(1,.2))
+            closebtn.bind(on_release=closer) # type: ignore
+            
+            #addbtn=Button(text="+",size_hint=(1,.2), background_color=(0, 0, 0, 0))
+            #addbtn.bind(on_release=Condition_row_maker) # type: ignore
+
+            
+
+            
+            #outerlayout.add_widget(addbtn)
+            outerlayout.add_widget(innerlayout)
+            outerlayout.add_widget(closebtn)
+            
+            popup.open()
+
+
+
+
+            
+
+        def template_selector():
+            root=tk.Tk()
+            root.withdraw()
+            img_path=filedialog.askopenfilename(filetypes=[('Image Files', '*.png *.jpg *.jpeg')])
+            if img_path:
+                digest=hashlib.sha256(str.encode(img_path)).hexdigest()[:10]
+                shutil.copy(img_path,f"./certificates/{digest}.png")
+                self.Cert_path=f"./certificates/{digest}.png"
+                root.destroy()
         def create_and_send(rectangles,RezeidFacotr,seleccol,df_selected,df_email):
+            if self.Conditons:
+                df_combine=pd.concat([df_selected,df_email],axis=1)
+                df_combine.columns=[column.replace(" ", "_") for column in df_combine.columns] 
+                print(df_combine)
+                for condition in self.Conditons:
+                    colums,operator,value=condition
+                    colums=colums.replace(" ","_")
+                    if isinstance(value, str):
+                        try:
+                            # Try to convert the value to a number
+                            value = float(value)
+                        except ValueError:
+                            # If the value cannot be converted to a number, keep it as a string
+                            value = f"'{value}'"
+                        
+                    query_str = f"{colums} {operator} {value}"
+                    df_combine = df_combine.query(query_str)
+                    print(df_combine)
+                df_combine=df_combine.reset_index(drop=True)
+                df_combine[seleccol] = df_combine[seleccol].map(str)
+                df_selected=df_combine[seleccol]
+                df_email=df_combine['Email_Address']
+            
+            df_selected[seleccol]=df_selected[seleccol].map(str)
+               
         
             ct=0
             for row in df_selected.itertuples(index=False):
@@ -115,6 +271,9 @@ class Generator:
                 draw=ImageDraw.Draw(img)
                 for i in range(len(seleccol)):
                     draw.text(((rectangles[i][0][0]+rectangles[i][1][0])/2,(rectangles[i][0][1]+rectangles[i][1][1])/2),row[i], font=ImageFont.truetype("arial.ttf", 20),fill='black',anchor='mm')
+                if not os.path.exists("./output"):
+                    os.mkdir('output')
+
                 img.save(f"./output/{row[0]}.png")
 
                 if df_email[ct]:
@@ -124,13 +283,50 @@ class Generator:
 
                 #os.remove(f"./output/{row[0]}.png")
 
+        with open("Entries.json","r+") as file:
+            content=json.load(file)
+            for entry in content["Saved_settings"]:
+                if entry["spreadId"]==self.spreadId:
+                    seleccol=entry["Selected_columns"]
+                    rectangles=entry["rectangles"]
+                    ReRezeidFactor=entry["ReRezeidFactor"]
+                    self.EMAIL_SUBJECT=entry["Subject"]
+                    self.EMAIL_CONTENT=entry["Message"]
+                    self.Cert_path=entry["Cret_path"]
+                    self.Conditons=entry["Conditions"]
+                    df_selected = self.df[seleccol]
+                    df_email = self.df['Email Address']
+                    create_and_send(rectangles,ReRezeidFactor,seleccol,df_selected,df_email)
+                    return True
+            template_selector()
+            self.seleccol=select_columns()
+            df_selected = self.df[self.seleccol]
+            df_email = self.df['Email Address']
+            rectangles,ReRezeidFactor=BoundedBoxer(self.seleccol,self.Cert_path).initiator()
+            Clock.schedule_once(create__message_box)
+            event.wait()
 
-        seleccol=select_columns()
-        df_selected = self.df[seleccol]
-        df_email = self.df['Email Address']
-        rectangles,ReRezeidFacotr=BoundedBoxer(seleccol,self.Cert_path).initiator()
-        create_and_send(rectangles,ReRezeidFacotr,seleccol,df_selected,df_email)
-        return True
+
+            
+
+            content["Saved_settings"].append(
+                {
+                    "Selected_columns":self.seleccol,
+                    "rectangles":rectangles,
+                    "ReRezeidFactor":ReRezeidFactor,
+                    "spreadId":self.spreadId,
+                    "Subject":self.EMAIL_SUBJECT,
+                    "Message":self.EMAIL_CONTENT,
+                    "Cret_path":self.Cert_path,
+                    "Conditions":self.Conditons
+
+                }
+            )
+            file.seek(0)
+            json.dump(content,file,indent=4)
+            file.truncate()
+            create_and_send(rectangles,ReRezeidFactor,self.seleccol,df_selected,df_email)
+            return True
     
     
 

@@ -53,7 +53,7 @@ class BoundedBoxer:
             # Resized window width and height
             window_width = int(self.img.shape[1] * scale)
             window_height = int(self.img.shape[0] * scale)
-            print(window_width, window_height)
+           
             self.RezeidFacotr = (window_width, window_height)
 
             # Resize the image

@@ -1,2 +1,3 @@
 SCRIPT_ID=Your_script_id
-EMAIL=
+EMAIL=Your_Email
+GOOGLE_CREDENTIAL_PATH=

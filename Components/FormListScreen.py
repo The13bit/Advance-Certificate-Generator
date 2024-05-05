@@ -2,6 +2,7 @@
 from cgitb import text
 from itertools import tee
 from os import name
+from pathlib import Path
 from turtle import onclick, title
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -16,6 +17,13 @@ from kivy.core.window import Window
 import webbrowser
 class FormListScreen(Screen):
     def on_enter(self, *args):
+        self.clear_widgets()
+        entry_file=Path("Entries.json")
+        if not entry_file.exists():
+        
+            data={"Entry":[],"Saved_settings":[]}
+            with entry_file.open("w") as file:
+              json.dump(data,file)
         with open('Entries.json') as f:
             self.entries = json.load(f)
         self.entries=self.entries["Entry"]
@@ -32,16 +40,16 @@ class FormListScreen(Screen):
         bottom_button = Button(text='Create Entry', size_hint_y=None, height=50)
         bottom_button.bind(on_release=self.go_to_FormId) # type: ignore
 
-        add_templat_btn=Button(text="Add Template",size_hint_y=None,height=50)
-        add_templat_btn.bind(on_release=self.go_to_template_adder)# type: ignore
+        # add_templat_btn=Button(text="Add Template",size_hint_y=None,height=50)
+        # add_templat_btn.bind(on_release=self.go_to_template_adder)# type: ignore
 
-        ImageHandle_btn=Button(text="add Signature",size_hint_y=None,height=50)
-        ImageHandle_btn.bind(on_release=self.go_to_image_handler)# type: ignore
+        # ImageHandle_btn=Button(text="add Signature",size_hint_y=None,height=50)
+        # ImageHandle_btn.bind(on_release=self.go_to_image_handler)# type: ignore
 
 
-        layout.add_widget(add_templat_btn)
+        #layout.add_widget(add_templat_btn)
         layout.add_widget(bottom_button)
-        layout.add_widget(ImageHandle_btn)
+        #layout.add_widget(ImageHandle_btn)
 
         self.add_widget(layout)
     def go_to_template_adder(self,instance):
