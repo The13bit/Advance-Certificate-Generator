@@ -26,6 +26,8 @@ from tkinter import E
 from Auth import api,auth
 import os
 from dotenv import load_dotenv
+
+from Thread_lock import Locker
 from helper.BoundedBoxer import BoundedBoxer
 load_dotenv()
 class Generator:
@@ -284,7 +286,7 @@ class Generator:
 
                 #os.remove(f"./output/{row[0]}.png")
 
-        with open("Entries.json","r+") as file:
+        with Locker() and open("Entries.json","r+") as file:
             content=json.load(file)
             for entry in content["Saved_settings"]:
                 if entry["spreadId"]==self.spreadId:

@@ -2,6 +2,7 @@
 import asyncio
 from os import name
 from pdb import run
+import threading
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 
@@ -14,17 +15,10 @@ from Components.FormListScreen import FormListScreen
 #from Components.ImageHandler import ImageHandler
 
 # Set the size of the window
-Window.size = (500, 600)
-
-
-
-
-
-
-            
-            
+Window.size = (500, 600)         
 
 class MyApp(App):
+    
     def build(self):
         sm = ScreenManager()
         sm.add_widget(FormListScreen(name='form_list'))
