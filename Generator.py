@@ -164,7 +164,8 @@ class Generator:
                             arr.append(j.text)
                         elif isinstance(j,TextInput):
                             arr.append(j.text)
-                    if arr:
+                    
+                    if arr and arr[0]!='':
                         self.Conditons.append(arr[::-1])
                 
 
