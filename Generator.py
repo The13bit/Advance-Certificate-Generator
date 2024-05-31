@@ -1,3 +1,4 @@
+import email
 import hashlib
 import json
 import shutil
@@ -43,6 +44,10 @@ class Generator:
 
     def Start_Generation(self):
         print(self.df)
+        self.df.columns = self.df.columns.str.lower()
+        self.df.columns = [
+                    column.replace(" ", "_") for column in self.df.columns
+                ]
         event = threading.Event()
 
         def send_mail(message):
@@ -214,10 +219,13 @@ class Generator:
 
         def create_and_send(rectangles, RezeidFacotr, seleccol, df_selected, df_email):
             if self.Conditons:
-                df_combine = pd.concat([df_selected, df_email], axis=1)
-                df_combine.columns = [
-                    column.replace(" ", "_") for column in df_combine.columns
-                ]
+                print(df_selected)
+                print(df_email)
+                if "email_address" not in df_selected.columns:
+                    df_combine = pd.concat([df_selected, df_email], axis=1)
+                else:
+                    df_combine = df_selected
+                
                 print(df_combine)
                 for condition in self.Conditons:
                     colums, operator, value = condition
@@ -236,7 +244,7 @@ class Generator:
                 df_combine = df_combine.reset_index(drop=True)
                 df_combine[seleccol] = df_combine[seleccol].map(str)
                 df_selected = df_combine[seleccol]
-                df_email = df_combine["Email_Address"]
+                df_email = df_combine["email_address"]
 
             df_selected[seleccol] = df_selected[seleccol].map(str)
 
@@ -286,7 +294,7 @@ class Generator:
                     self.Cert_path = entry["Cret_path"]
                     self.Conditons = entry["Conditions"]
                     df_selected = self.df[seleccol]
-                    df_email = self.df["Email Address"]
+                    df_email = self.df["email_address"]
                     create_and_send(
                         rectangles, ReRezeidFactor, seleccol, df_selected, df_email
                     )
@@ -294,7 +302,7 @@ class Generator:
             template_selector()
             self.seleccol = select_columns()
             df_selected = self.df[self.seleccol]
-            df_email = self.df["Email Address"]
+            df_email = self.df["email_address"]
             rectangles, ReRezeidFactor = BoundedBoxer(
                 self.seleccol, self.Cert_path
             ).initiator()
