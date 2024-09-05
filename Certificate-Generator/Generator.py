@@ -1,6 +1,7 @@
 import email
 import hashlib
 import json
+from pathlib import Path
 import shutil
 import threading
 from tkinter import filedialog
@@ -20,7 +21,7 @@ from kivy.clock import Clock
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from Auth import api, auth
+from Auth import api, auth,current_dir
 import os
 from dotenv import load_dotenv
 
@@ -32,7 +33,8 @@ load_dotenv()
 
 class Generator:
     def __init__(self, data, spreadId) -> None:
-        self.Cert_path = "certificates/cert.png"
+        self.Cert_path =Path(os.path.join(current_dir,"certificates/cert.png")) 
+        self.base=os.path.join(current_dir,"certificates")
         self.data = data
         self.img = Image.open(self.Cert_path)
         self.df = pd.DataFrame.from_dict(data)
@@ -213,8 +215,8 @@ class Generator:
             )
             if img_path:
                 digest = hashlib.sha256(str.encode(img_path)).hexdigest()[:10]
-                shutil.copy(img_path, f"./certificates/{digest}.png")
-                self.Cert_path = f"./certificates/{digest}.png"
+                shutil.copy(img_path, f"{self.base}/{digest}.png")
+                self.Cert_path = f"{self.base}/{digest}.png"
                 root.destroy()
 
         def create_and_send(rectangles, RezeidFacotr, seleccol, df_selected, df_email):
@@ -264,10 +266,10 @@ class Generator:
                         fill="black",
                         anchor="mm",
                     )
-                if not os.path.exists("./output"):
-                    os.mkdir("output")
+                if not os.path.exists(f"{self.base}/output"):
+                    os.mkdir(f"{self.base}/output")
 
-                img.save(f"./output/{row[0]}.png")
+                img.save(f"{self.base}/output/{row[0]}.png")
 
                 if df_email[ct]:
                     message = create_message(
@@ -275,14 +277,14 @@ class Generator:
                         df_email[ct],
                         self.EMAIL_SUBJECT,
                         self.EMAIL_CONTENT,
-                        f"./output/{row[0]}.png",
+                        f"{self.base}/output/{row[0]}.png",
                     )
                     send_mail(message)
                 ct += 1
 
                 # os.remove(f"./output/{row[0]}.png")
 
-        with Locker() and open("Entries.json", "r+") as file:
+        with Locker() and open(os.path.join(current_dir,"Entries.json"), "r+") as file:
             content = json.load(file)
             for entry in content["Saved_settings"]:
                 if entry["spreadId"] == self.spreadId:
@@ -328,3 +330,4 @@ class Generator:
                 rectangles, ReRezeidFactor, self.seleccol, df_selected, df_email
             )
             return True
+

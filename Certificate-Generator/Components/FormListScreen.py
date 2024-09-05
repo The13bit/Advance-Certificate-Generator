@@ -2,6 +2,8 @@
 from cgitb import text
 from itertools import tee
 from os import name
+from Auth import current_dir
+import os
 from pathlib import Path
 from turtle import onclick, title
 from kivy.app import App
@@ -18,13 +20,13 @@ import webbrowser
 class FormListScreen(Screen):
     def on_enter(self, *args):
         self.clear_widgets()
-        entry_file=Path("Entries.json")
+        entry_file=Path(os.path.join(current_dir,"Entries.json"))
         if not entry_file.exists():
         
             data={"Entry":[],"Saved_settings":[]}
             with entry_file.open("w") as file:
               json.dump(data,file)
-        with open('Entries.json') as f:
+        with entry_file.open() as f:
             self.entries = json.load(f)
         self.entries=self.entries["Entry"]
         layout = BoxLayout(orientation='vertical', size_hint_y=None, pos_hint={'top': 1})

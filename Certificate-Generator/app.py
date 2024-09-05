@@ -27,7 +27,7 @@ class MyApp(App):
         await self.async_run(async_lib="asyncio") # type: ignore
 
     async def base(self):
-        await asyncio.wait({self.kivyCorout()}, return_when="FIRST_COMPLETED")
+        await asyncio.wait({asyncio.create_task(self.kivyCorout())}, return_when=asyncio.FIRST_COMPLETED)
 
 
 instance = MyApp()

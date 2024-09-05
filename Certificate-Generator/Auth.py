@@ -11,10 +11,14 @@ from dotenv import load_dotenv
 from requests import Request
 from google.auth.exceptions import RefreshError
 load_dotenv()
+current_dir = os.path.dirname(__file__)
 class auth:
+  
   def __init__(self) :
+    
     self.client_secret=os.environ.get("GOOGLE_CREDENTIAL_PATH")
-    self.token=Path("./Credentials/token.json")
+    self.token=Path(os.path.join(current_dir, "Credentials/token.json"))
+    os.makedirs(os.path.dirname(self.token), exist_ok=True)
     self.scopes=["https://www.googleapis.com/auth/forms.body","https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/script.projects",	"https://www.googleapis.com/auth/spreadsheets","https://www.googleapis.com/auth/forms",	"https://www.googleapis.com/auth/presentations","https://www.googleapis.com/auth/gmail.send"]
     self.credntials=None
 
@@ -49,6 +53,7 @@ class auth:
     self.credntials=tools.run_flow(flow,file.Storage(self.token))
 
   def __SaveTk(self):
+        
         with open(self.token, 'w') as token:
             if self.credntials:
               token.write(self.credntials.to_json())
@@ -104,7 +109,7 @@ class api:
       if response.get('error'):
         message = response['error']['details'][0]['errorMessage']
         raise RuntimeError(message)
-      with open('Entries.json','r+') as file:
+      with open(os.path.join(current_dir,"Entries.json"),'r+') as file:
         data=json.load(file)
         data["Entry"]=[entry for entry in data["Entry"] if entry.get("formId")!=formId]
         file.seek(0)
@@ -130,7 +135,7 @@ class api:
       if response.get('error'):
         message = response['error']['details'][0]['errorMessage']
         raise RuntimeError(message)
-      with open("Entries.json","r+") as file:
+      with open(os.path.join(current_dir,"Entries.json"),"r+") as file:
         content=json.load(file)
         for entry in content["Entry"]:
           if entry["spreadsheetId"]==sheetId:
@@ -172,7 +177,7 @@ class api:
     Args:
       res (object): The entry object.
     """
-    entry_file = Path("Entries.json")
+    entry_file = Path(os.path.join(current_dir,"Entries.json"))
     if not entry_file.exists():
       data = {"Entry": []}
       with entry_file.open("w") as file:
